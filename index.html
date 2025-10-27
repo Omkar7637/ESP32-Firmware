@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ESP32 Remote Control</title>
+</head>
+<body style="font-family:sans-serif;text-align:center;margin-top:50px;">
+  <h1>ESP32 Counter Control</h1>
+  <button onclick="updateCounter('increase')">Increase</button>
+  <button onclick="updateCounter('decrease')">Decrease</button>
+  <p id="status"></p>
+
+  <script>
+    async function updateCounter(action) {
+      const token = "YOUR_GITHUB_TOKEN_HERE"; // You’ll need a GitHub personal access token
+      const repo = "Omkar7637/ESP32-Firmware";
+      const path = "state.txt";
+
+      const response = await fetch(`https://api.github.com/repos/${repo}/contents/${path}`);
+      const data = await response.json();
+      const content = atob(data.content);
+      let currentValue = parseInt(content.split('=')[1]);
+      if (action === 'increase') currentValue++;
+      if (action === 'decrease') currentValue--;
+      const newContent = btoa(`counter=${currentValue}`);
+
+      await fetch(`https://api.github.com/repos/${repo}/contents/${path}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `token ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: `${action} counter`,
+          content: newContent,
+          sha: data.sha
+        })
+      });
+
+      document.getElementById("status").innerText = `Counter ${action}d! (New value = ${currentValue})`;
+    }
+  </script>
+</body>
+</html>
